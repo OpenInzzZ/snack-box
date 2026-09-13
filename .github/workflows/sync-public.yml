@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      force:
+        description: 强制覆盖公开仓库 main（仅在两边历史对不上时使用）
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -30,6 +35,12 @@ jobs:
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Push main to public repo
+        env:
+          FORCE: ${{ inputs.force }}
         run: |
           git remote add public git@github.com:OpenInzzZ/snack-box.git
-          git push public HEAD:main
+          if [ "$FORCE" = "true" ]; then
+            git push --force public HEAD:main
+          else
+            git push public HEAD:main
+          fi
