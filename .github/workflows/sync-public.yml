@@ -29,21 +29,22 @@ jobs:
 
       - name: Setup SSH key
         env:
-          DEPLOY_KEY_B64: ${{ secrets.PUBLIC_DEPLOY_KEY_B64 }}
+          # secret 存的是私钥的 base64 单行串，避免剪贴板把多行密钥的换行转成 CRLF
+          KEY_B64: ${{ secrets.PUBLIC_DEPLOY_KEY }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s' "$DEPLOY_KEY_B64" | tr -d '\r\n\t ' | base64 -d > ~/.ssh/id_ed25519
+          printf '%s' "$KEY_B64" | tr -d '\r\n\t ' | base64 -d > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Verify deploy key
         run: |
           if [ ! -s ~/.ssh/id_ed25519 ]; then
-            echo "::error::secret PUBLIC_DEPLOY_KEY_B64 为空。确认它建在 snack-box-dev 的 Repository secrets 里（不是 Variables、不是 Environment secrets），且名称完全一致。"
+            echo "::error::secret PUBLIC_DEPLOY_KEY 为空。确认它建在 snack-box-dev 的 Repository secrets 里（不是 Variables、不是 Environment secrets），且名称完全一致。"
             exit 1
           fi
           if ! ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null 2>&1; then
-            echo "::error::私钥无法解析。检查 base64 串是否粘贴完整——在本地重新执行 base64 -w0 ~/.ssh/snackbox_publish 再复制一次。"
+            echo "::error::私钥无法解析。这个 secret 现在必须存 base64 单行串，不能再存多行私钥（剪贴板会把换行转成 CRLF 导致 libcrypto 报错）。请用 PowerShell 重新生成后更新 secret。"
             exit 1
           fi
           if ! ssh -o BatchMode=yes -T git@github.com 2>&1 | grep -q 'successfully authenticated'; then
