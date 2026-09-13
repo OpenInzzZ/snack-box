@@ -23,16 +23,33 @@ jobs:
     if: github.repository == 'OpenInzzZ/snack-box-dev'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
       - name: Setup SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.PUBLIC_DEPLOY_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PUBLIC_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Verify deploy key
+        run: |
+          if [ ! -s ~/.ssh/id_ed25519 ]; then
+            echo "::error::secret PUBLIC_DEPLOY_KEY 为空。确认它建在 snack-box-dev 的 Repository secrets 里（不是 Variables、不是 Environment secrets），且名称完全一致。"
+            exit 1
+          fi
+          if ! ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null 2>&1; then
+            echo "::error::私钥无法解析。粘贴时可能缺少 BEGIN/END 行，或混入了多余字符。"
+            exit 1
+          fi
+          if ! ssh -o BatchMode=yes -T git@github.com 2>&1 | grep -q 'successfully authenticated'; then
+            echo "::error::SSH 认证失败。确认 Deploy Key 已加到 snack-box，且勾选了 Allow write access。"
+            exit 1
+          fi
 
       - name: Push main to public repo
         env:
