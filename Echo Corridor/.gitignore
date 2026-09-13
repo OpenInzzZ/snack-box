@@ -1,0 +1,16 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# 开发用自检/截图输出（保留 .gdignore，否则 Godot 会去导入这些截图）
+tools/out/*
+!tools/out/.gdignore
+
+# 导出产物
+build/
+
+# 本地工具配置（内含本机绝对路径）
+.qoder/
+
+# 未被引用且为商业授权的字体，不入库
+assets/fonts/simhei.ttf*

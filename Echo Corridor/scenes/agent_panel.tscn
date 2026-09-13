@@ -1,0 +1,49 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://script/agent/AgentPanel.cs" id="1_panel"]
+
+[node name="AgentPanel" type="CanvasLayer"]
+layer = 2
+script = ExtResource("1_panel")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 56.0
+offset_right = 436.0
+offset_bottom = -24.0
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.05, 0.05, 0.06, 0.72)
+
+[node name="Title" type="Label" parent="."]
+offset_left = 28.0
+offset_top = 62.0
+offset_right = 424.0
+offset_bottom = 92.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 18
+text = "Agent 模式中（左侧是它的每一步）"
+
+[node name="Log" type="RichTextLabel" parent="."]
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = 96.0
+offset_right = 424.0
+offset_bottom = -60.0
+grow_vertical = 2
+mouse_filter = 2
+bbcode_enabled = true
+scroll_following = true
+theme_override_font_sizes/normal_font_size = 14
+
+[node name="StopButton" type="Button" parent="."]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = -54.0
+offset_right = 190.0
+offset_bottom = -24.0
+grow_vertical = 0
+text = "停止"

@@ -1,0 +1,423 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://script/ui/MainMenu.cs" id="1_menu"]
+
+[sub_resource type="ButtonGroup" id="ButtonGroup_difficulty"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Home" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -320.0
+offset_right = 330.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="Home"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 44
+text = "回声走廊"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Home"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "摸黑走进迷宫，靠回声看清墙壁"
+horizontal_alignment = 1
+
+[node name="StartButton" type="Button" parent="Home"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "开始游戏"
+
+[node name="AgentButton" type="Button" parent="Home"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "Agent 模式"
+
+[node name="ActionRow" type="HBoxContainer" parent="Home"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="LeaderboardButton" type="Button" parent="Home/ActionRow"]
+custom_minimum_size = Vector2(150, 44)
+layout_mode = 2
+text = "排行榜"
+
+[node name="SettingsButton" type="Button" parent="Home/ActionRow"]
+custom_minimum_size = Vector2(150, 44)
+layout_mode = 2
+text = "设置"
+
+[node name="BoardLabel" type="Label" parent="Home"]
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+text = "排行榜"
+horizontal_alignment = 1
+
+[node name="SettingsPanel" type="VBoxContainer" parent="Home"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="SettingsTitle" type="Label" parent="Home/SettingsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "设置"
+horizontal_alignment = 1
+
+[node name="ModeRow" type="HBoxContainer" parent="Home/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ModeHint" type="Label" parent="Home/SettingsPanel/ModeRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "显示模式"
+
+[node name="ModePicker" type="OptionButton" parent="Home/SettingsPanel/ModeRow"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+
+[node name="ResolutionRow" type="HBoxContainer" parent="Home/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ResolutionHint" type="Label" parent="Home/SettingsPanel/ResolutionRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "窗口分辨率"
+
+[node name="ResolutionPicker" type="OptionButton" parent="Home/SettingsPanel/ResolutionRow"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+
+[node name="SettingsHint" type="Label" parent="Home/SettingsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "选择后立即生效，并会被记住（F11 可快速切全屏）"
+horizontal_alignment = 1
+
+[node name="ModelsPage" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -320.0
+offset_right = 330.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="TopRow" type="HBoxContainer" parent="ModelsPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="BackButton" type="Button" parent="ModelsPage/TopRow"]
+custom_minimum_size = Vector2(110, 40)
+layout_mode = 2
+text = "返回"
+
+[node name="Title" type="Label" parent="ModelsPage/TopRow"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "选择模型"
+horizontal_alignment = 1
+
+[node name="ModelList" type="VBoxContainer" parent="ModelsPage"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="ListActions" type="HBoxContainer" parent="ModelsPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="AddButton" type="Button" parent="ModelsPage/ListActions"]
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "新增模型"
+
+[node name="EditButton" type="Button" parent="ModelsPage/ListActions"]
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "编辑"
+
+[node name="RemoveButton" type="Button" parent="ModelsPage/ListActions"]
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "删除"
+
+[node name="ModelsHint" type="Label" parent="ModelsPage"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "模型信息加密保存在本地；Key 只是混淆存放，请自行判断风险"
+horizontal_alignment = 1
+
+[node name="NextButton" type="Button" parent="ModelsPage"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "下一步"
+
+[node name="EditPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -230.0
+offset_right = 330.0
+offset_bottom = 230.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Form" type="VBoxContainer" parent="EditPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="FormTitle" type="Label" parent="EditPanel/Form"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "编辑模型"
+horizontal_alignment = 1
+
+[node name="NameRow" type="HBoxContainer" parent="EditPanel/Form"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="NameHint" type="Label" parent="EditPanel/Form/NameRow"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "名称"
+
+[node name="NameInput" type="LineEdit" parent="EditPanel/Form/NameRow"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+placeholder_text = "便于自己辨认的名字"
+
+[node name="UrlRow" type="HBoxContainer" parent="EditPanel/Form"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="UrlHint" type="Label" parent="EditPanel/Form/UrlRow"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "接口地址"
+
+[node name="UrlInput" type="LineEdit" parent="EditPanel/Form/UrlRow"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+placeholder_text = "https://api.openai.com/v1 或 mock://demo"
+
+[node name="ModelRow" type="HBoxContainer" parent="EditPanel/Form"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="ModelHint" type="Label" parent="EditPanel/Form/ModelRow"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "模型名"
+
+[node name="ModelInput" type="LineEdit" parent="EditPanel/Form/ModelRow"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+placeholder_text = "gpt-4o-mini"
+
+[node name="KeyRow" type="HBoxContainer" parent="EditPanel/Form"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="KeyHint" type="Label" parent="EditPanel/Form/KeyRow"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "API Key"
+
+[node name="KeyInput" type="LineEdit" parent="EditPanel/Form/KeyRow"]
+custom_minimum_size = Vector2(360, 36)
+layout_mode = 2
+secret = true
+placeholder_text = "本地加密保存"
+
+[node name="FormatRow" type="HBoxContainer" parent="EditPanel/Form"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="FormatHint" type="Label" parent="EditPanel/Form/FormatRow"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "接口格式"
+
+[node name="FormatPicker" type="OptionButton" parent="EditPanel/Form/FormatRow"]
+custom_minimum_size = Vector2(220, 36)
+layout_mode = 2
+
+[node name="FormButtons" type="HBoxContainer" parent="EditPanel/Form"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="SaveButton" type="Button" parent="EditPanel/Form/FormButtons"]
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "保存"
+
+[node name="CancelButton" type="Button" parent="EditPanel/Form/FormButtons"]
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+text = "取消"
+
+[node name="SetupPage" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -320.0
+offset_right = 330.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="TopRow" type="HBoxContainer" parent="SetupPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="BackButton" type="Button" parent="SetupPage/TopRow"]
+custom_minimum_size = Vector2(110, 40)
+layout_mode = 2
+text = "返回"
+
+[node name="Title" type="Label" parent="SetupPage/TopRow"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "游戏配置"
+horizontal_alignment = 1
+
+[node name="DifficultyRow" type="HBoxContainer" parent="SetupPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="DifficultyHint" type="Label" parent="SetupPage/DifficultyRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "难度"
+
+[node name="LowButton" type="Button" parent="SetupPage/DifficultyRow"]
+custom_minimum_size = Vector2(76, 36)
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_difficulty")
+text = "低"
+
+[node name="MediumButton" type="Button" parent="SetupPage/DifficultyRow"]
+custom_minimum_size = Vector2(76, 36)
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_difficulty")
+text = "中"
+
+[node name="HighButton" type="Button" parent="SetupPage/DifficultyRow"]
+custom_minimum_size = Vector2(76, 36)
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_difficulty")
+text = "高"
+
+[node name="SeedRow" type="HBoxContainer" parent="SetupPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="SeedHint" type="Label" parent="SetupPage/SeedRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "种子"
+
+[node name="SeedInput" type="LineEdit" parent="SetupPage/SeedRow"]
+custom_minimum_size = Vector2(200, 36)
+layout_mode = 2
+placeholder_text = "留空 = 每局随机"
+max_length = 6
+caret_blink = true
+
+[node name="AgentWarning" type="Label" parent="SetupPage"]
+visible = false
+custom_minimum_size = Vector2(660, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.4, 1)
+theme_override_font_sizes/font_size = 18
+text = "⚠ Agent 模式会持续调用你配置的模型，按 token 计费，可能产生实际费用。请确认额度与账单，暂停可随时中止。"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="AgentModelLabel" type="Label" parent="SetupPage"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 15
+text = "当前模型：—"
+horizontal_alignment = 1
+
+[node name="BeginButton" type="Button" parent="SetupPage"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "开始游戏"

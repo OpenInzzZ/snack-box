@@ -1,0 +1,171 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://script/maze/MazeGame.cs" id="1_game"]
+[ext_resource type="Script" path="res://script/maze/MazeView.cs" id="2_view"]
+[ext_resource type="Script" path="res://script/maze/MinimapGeometry.cs" id="3_minimap"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_player"]
+radius = 8.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_walls_placeholder"]
+size = Vector2(1, 1)
+
+[node name="MazeGame" type="Node2D"]
+script = ExtResource("1_game")
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="Fill" type="ColorRect" parent="Background"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Walls" type="StaticBody2D" parent="."]
+
+[node name="ShapePlaceholder" type="CollisionShape2D" parent="Walls"]
+shape = SubResource("RectangleShape2D_walls_placeholder")
+disabled = true
+
+[node name="Player" type="CharacterBody2D" parent="."]
+motion_mode = 1
+
+[node name="Shape" type="CollisionShape2D" parent="Player"]
+shape = SubResource("CircleShape2D_player")
+
+[node name="Camera" type="Camera2D" parent="Player"]
+enabled = true
+position_smoothing_enabled = false
+
+[node name="MazeView" type="Node2D" parent="."]
+z_index = 10
+script = ExtResource("2_view")
+
+[node name="MinimapGeometry" type="Node2D" parent="."]
+script = ExtResource("3_minimap")
+
+[node name="MinimapViewport" type="SubViewport" parent="."]
+size = Vector2i(220, 220)
+transparent_bg = true
+render_target_update_mode = 4
+
+[node name="MinimapCamera" type="Camera2D" parent="MinimapViewport"]
+enabled = true
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Hint" type="Label" parent="UI"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 840.0
+offset_bottom = 40.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+text = "WASD / 方向键 移动　　R 重开迷宫　　Esc 返回菜单　　滚轮或 +/- 缩放　　F11 全屏"
+
+[node name="TimerLabel" type="Label" parent="UI"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -420.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = 40.0
+grow_horizontal = 0
+horizontal_alignment = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+text = "难度 中　种子 123456　用时 0.00 秒"
+
+[node name="MinimapBackdrop" type="ColorRect" parent="UI"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -236.0
+offset_top = -236.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.06, 0.06, 0.06, 0.85)
+
+[node name="MinimapDisplay" type="TextureRect" parent="UI"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -236.0
+offset_top = -236.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+expand_mode = 1
+
+[node name="ResultPanel" type="ColorRect" parent="UI"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -60.0
+offset_right = 330.0
+offset_bottom = 315.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.72)
+
+[node name="WinLabel" type="Label" parent="UI"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -450.0
+offset_top = -40.0
+offset_right = 450.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 28
+text = "抵达出口！"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LeaderboardLabel" type="RichTextLabel" parent="UI"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = 74.0
+offset_right = 300.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 7
+theme_override_font_sizes/normal_font_size = 17
+bbcode_enabled = true
+text = "排行榜"
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+mouse_filter = 2
+horizontal_alignment = 1
