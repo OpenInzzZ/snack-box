@@ -30,10 +30,34 @@ public partial class LlmClient : Node
 	private HttpRequest _http;
 	private DemoBrain _demo;
 
+	// 请求结果先落到字段里，等待循环再取。cancel_request() 不会再发完成信号，
+	// 所以不能直接 await 信号（那会永久挂起），只能每帧轮询这两个标志。
+	private bool _completed;
+	private bool _cancelled;
+	private long _resultCode;
+	private long _responseCode;
+	private byte[] _responseBody = System.Array.Empty<byte>();
+
 	public override void _Ready()
 	{
 		_http = new HttpRequest { Timeout = 180 };
+		_http.RequestCompleted += OnRequestCompleted;
 		AddChild(_http);
+	}
+
+	private void OnRequestCompleted(long result, long responseCode, string[] headers, byte[] body)
+	{
+		_resultCode = result;
+		_responseCode = responseCode;
+		_responseBody = body;
+		_completed = true;
+	}
+
+	/// <summary>打断正在飞的请求，让等待循环立刻退出（用于"停止"）</summary>
+	public void Cancel()
+	{
+		_cancelled = true;
+		if (_http != null && IsInstanceValid(_http)) _http.CancelRequest();
 	}
 
 	/// <summary>开一局：清空历史与演示脑</summary>
@@ -41,6 +65,8 @@ public partial class LlmClient : Node
 	{
 		_turns.Clear();
 		_demo = new DemoBrain();
+		_completed = false;
+		_cancelled = false;
 	}
 
 	public void AddUser(string text) => _turns.Add(new Turn { Role = "user", Text = text });
@@ -78,12 +104,26 @@ public partial class LlmClient : Node
 		var headers = new List<string> { "Content-Type: application/json" };
 		if (AgentStore.Current.ApiKey.Length > 0) headers.Add($"Authorization: Bearer {AgentStore.Current.ApiKey}");
 
+		_cancelled = false;
+		_completed = false;
+
 		Error error = _http.Request(AgentStore.RequestUrl, headers.ToArray(), HttpClient.Method.Post, body);
 		if (error != Error.Ok) return Failed($"请求发不出去：{error}");
 
-		Variant[] result = await ToSignal(_http, HttpRequest.SignalName.RequestCompleted);
-		long code = result[1].AsInt64();
-		string text = Encoding.UTF8.GetString(result[3].AsByteArray());
+		// 轮询而不是 await 信号：这样点"停止"后能立刻返回，不用等网络往返
+		while (!_completed && !_cancelled)
+		{
+			if (!IsInstanceValid(this) || GetTree() == null) return Failed("已停止。");
+
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		}
+
+		if (_cancelled) return Failed("已停止。");
+		if (_resultCode != (long)HttpRequest.Result.Success)
+			return Failed($"请求失败：{(HttpRequest.Result)_resultCode}");
+
+		long code = _responseCode;
+		string text = Encoding.UTF8.GetString(_responseBody);
 
 		if (code != 200)
 		{

@@ -195,39 +195,52 @@ public partial class MenuSelfCheck : SceneTree
 	{
 		Menu.GetNode<Button>("Home/AgentButton").EmitSignal(BaseButton.SignalName.Pressed);
 		Check(ModelsPage.Visible && !Home.Visible, "Agent 模式进入选择模型页");
+		Check(AgentStore.StepDelay == 0f,
+			$"步进间隔为 0，存档里旧的 step_delay 不再生效（实际 {AgentStore.StepDelay:0.00}）");
 
-		var list = Menu.GetNode<VBoxContainer>("ModelsPage/ModelList");
+		var list = Menu.GetNode<VBoxContainer>("ModelsPage/ListScroll/ModelList");
 		int before = list.GetChildCount();
 		Check(before >= 1, $"模型列表至少有一套内置演示（{before} 套）");
 		Shoot("menu_models.png");
 
-		// 新增一套模型
-		Menu.GetNode<Button>("ModelsPage/ListActions/AddButton").EmitSignal(BaseButton.SignalName.Pressed);
-		var form = Menu.GetNode<Control>("EditPanel");
-		Check(form.Visible, "点新增后弹出编辑表单");
-
-		Menu.GetNode<LineEdit>("EditPanel/Form/NameRow/NameInput").Text = "自检模型";
-		Menu.GetNode<LineEdit>("EditPanel/Form/UrlRow/UrlInput").Text = AgentStore.DemoBaseUrl;
-		Menu.GetNode<LineEdit>("EditPanel/Form/ModelRow/ModelInput").Text = "demo";
-
-		int countBefore = AgentStore.Count;
-		Menu.GetNode<Button>("EditPanel/Form/FormButtons/SaveButton").EmitSignal(BaseButton.SignalName.Pressed);
-
-		Check(!form.Visible, "保存后表单关闭");
-		Check(AgentStore.Count == countBefore + 1, $"模型库多了一套（{countBefore} → {AgentStore.Count}）");
-		Check(AgentStore.Current.Name == "自检模型", $"新增的模型被自动选中（当前 {AgentStore.Current.Name}）");
-
-		// 切回内置演示，保证 Agent 跑起来不联网
-		for (int i = 0; i < AgentStore.Count; i++)
+		// 截图在帧末落盘，先等一拍再改状态，否则拍到的是表单已经弹出/保存之后的样子
+		Next(StepDelay, () =>
 		{
-			if (AgentStore.At(i).BaseUrl == AgentStore.DemoBaseUrl)
-			{
-				AgentStore.Select(i);
-				break;
-			}
-		}
+			// 新增一套模型
+			Menu.GetNode<Button>("ModelsPage/ListActions/AddButton").EmitSignal(BaseButton.SignalName.Pressed);
+			var form = Menu.GetNode<Control>("EditPanel");
+			var dim = Menu.GetNode<Control>("EditDim");
+			Check(form.Visible, "点新增后弹出编辑表单");
+			Check(dim.Visible, "编辑表单弹出时遮罩同时出现（否则会和列表透视重叠）");
+			Shoot("menu_model_form.png");
 
-		Next(StepDelay, VerifyAgentSetup);
+			Next(StepDelay, () =>
+			{
+				Menu.GetNode<LineEdit>("EditPanel/Form/NameRow/NameInput").Text = "自检模型";
+				Menu.GetNode<LineEdit>("EditPanel/Form/UrlRow/UrlInput").Text = AgentStore.DemoBaseUrl;
+				Menu.GetNode<LineEdit>("EditPanel/Form/ModelRow/ModelInput").Text = "demo";
+
+				int countBefore = AgentStore.Count;
+				Menu.GetNode<Button>("EditPanel/Form/FormButtons/SaveButton").EmitSignal(BaseButton.SignalName.Pressed);
+
+				Check(!form.Visible, "保存后表单关闭");
+				Check(!dim.Visible, "保存后遮罩一起收起");
+				Check(AgentStore.Count == countBefore + 1, $"模型库多了一套（{countBefore} → {AgentStore.Count}）");
+				Check(AgentStore.Current.Name == "自检模型", $"新增的模型被自动选中（当前 {AgentStore.Current.Name}）");
+
+				// 切回内置演示，保证 Agent 跑起来不联网
+				for (int i = 0; i < AgentStore.Count; i++)
+				{
+					if (AgentStore.At(i).BaseUrl == AgentStore.DemoBaseUrl)
+					{
+						AgentStore.Select(i);
+						break;
+					}
+				}
+
+				Next(StepDelay, VerifyAgentSetup);
+			});
+		});
 	}
 
 	private void VerifyAgentSetup()

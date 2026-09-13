@@ -38,8 +38,12 @@ public partial class AgentPlayer : Node
 		_ = Run();
 	}
 
-	/// <summary>由面板的"停止"按钮调用</summary>
-	public void RequestStop() => _stopped = true;
+	/// <summary>由面板的"停止"按钮调用：置标志并打断正在飞的请求，不必等它返回</summary>
+	public void RequestStop()
+	{
+		_stopped = true;
+		_client.Cancel();
+	}
 
 	private async Task Run()
 	{

@@ -3,8 +3,10 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
-/// Agent 模式自检。两种用法：
+/// Agent 模式自检。三种用法：
 ///   --agent-demo                      用内置演示脑跑完一局（不需要联网），断言最终通关
+///   --agent-stop                      用演示脑跑几步后点「停止」，断言循环真的退出
+///   --agent-cancel --mock-url=...     假模型故意慢响应，断言点停止能立刻打断请求，不必等它返回
 ///   --mock-url=... [--format=chat|responses]
 ///                                     指向本地假模型，断言多轮工具调用跑通（验证两种接口格式的请求与解析）
 /// 用法：Godot_console.exe --headless --path . res://tools/checks/agent_check.tscn --fixed-fps 60 -- --agent-demo
@@ -26,6 +28,9 @@ public partial class AgentCheck : Node
 	private float _frozenElapsed;
 	private bool _resumed;
 	private int _boardBefore;
+	private bool _stopTest;
+	private int _afterStop;
+	private bool _cancelTest;
 
 	public override void _Ready()
 	{
@@ -51,6 +56,8 @@ public partial class AgentCheck : Node
 		{
 			if (argument == "--agent-demo") _demo = true;
 			else if (argument == "--shot") _shotOnly = true;
+			else if (argument == "--agent-stop") _stopTest = true;
+			else if (argument == "--agent-cancel") _cancelTest = true;
 			else if (argument.StartsWith("--mock-url=", StringComparison.Ordinal)) mockUrl = argument["--mock-url=".Length..];
 			else if (argument == "--format=responses") format = AgentStore.ApiFormat.Responses;
 			else if (argument == "--format=chat") format = AgentStore.ApiFormat.ChatCompletions;
@@ -63,6 +70,18 @@ public partial class AgentCheck : Node
 			// 截图用：节奏放慢一点，看得到面板在滚
 			UseProfile(AgentStore.DemoBaseUrl, "demo", "", 0.4f, AgentStore.ApiFormat.Auto);
 			GD.Print("[AGENTCHECK] 模式=演示脑（截图）");
+		}
+		else if (_stopTest)
+		{
+			// 只验证「停止」按钮能否中断循环，不跑到通关
+			UseProfile(AgentStore.DemoBaseUrl, "demo", "", 0f, AgentStore.ApiFormat.Auto);
+			GD.Print("[AGENTCHECK] 模式=演示脑（只测停止按钮）");
+		}
+		else if (_cancelTest)
+		{
+			// 假模型故意慢响应，验证停止能立刻打断请求、而不是干等它回来
+			UseProfile(mockUrl, "mock-model", "test-key", 0f, AgentStore.ApiFormat.Auto);
+			GD.Print($"[AGENTCHECK] 模式=慢响应假模型 {mockUrl}（测立即中断）");
 		}
 		else if (_demo)
 		{
@@ -88,6 +107,34 @@ public partial class AgentCheck : Node
 		// 自检本身要一直跑（否则没法验证"暂停期间确实冻结"），但迷宫必须显式设成 Pausable，
 		// 否则它会跟着自检一起变成 Always、暂停就失效了。真实游戏里根节点是 Inherit，本来就会停。
 		_maze.ProcessMode = ProcessModeEnum.Pausable;
+
+		if (_cancelTest)
+		{
+			// 按真实时间判定（假模型的延迟也是真实时间），不跟帧数挂钩
+			GetTree().CreateTimer(0.5).Timeout += PressStop;
+			GetTree().CreateTimer(1.2).Timeout += CheckCancelled;
+		}
+	}
+
+	private void PressStop()
+	{
+		if (!IsInstanceValid(this) || _maze?.Panel == null) return;
+
+		_maze.Panel.GetNode<Button>("StopButton").EmitSignal(BaseButton.SignalName.Pressed);
+		GD.Print("[AGENTCHECK] 已点停止，此时那个慢请求还没返回");
+	}
+
+	private void CheckCancelled()
+	{
+		if (!IsInstanceValid(this) || _maze?.Panel == null)
+		{
+			Report(false, "取消测试：面板已不存在");
+			return;
+		}
+
+		Button button = _maze.Panel.GetNode<Button>("StopButton");
+		bool finished = button.Text == "已结束";
+		Report(finished, $"慢请求下点停止：1.2 秒内面板已收尾（按钮=\"{button.Text}\"，没等请求返回）");
 	}
 
 	public override void _Process(double delta)
@@ -106,6 +153,39 @@ public partial class AgentCheck : Node
 			if (!_demo && _maze.Agent == null) Fail("没有挂上 Agent 循环");
 			if (!_demo && _maze.Panel == null) Fail("没有挂上思考面板");
 			if (_maze.HumanControllable) Fail("Agent 模式时玩家操作没有被屏蔽");
+		}
+
+		if (_cancelTest)
+		{
+			// 判定走 CreateTimer（真实时间），这里只兜底防止挂死
+			if (_frame > MaxFrames) Report(false, "取消测试超时");
+			return;
+		}
+
+		if (_stopTest)
+		{
+			if (_frame == 60)
+			{
+				_maze.Panel.GetNode<Button>("StopButton").EmitSignal(BaseButton.SignalName.Pressed);
+			}
+			else if (_frame == 120)
+			{
+				_afterStop = _maze.Panel.StepCount;
+			}
+			else if (_frame == 160)
+			{
+				Button button = _maze.Panel.GetNode<Button>("StopButton");
+				bool finished = button.Text == "已结束";
+				bool frozen = _maze.Panel.StepCount == _afterStop;
+				bool notWon = !_maze.Won;
+
+				Report(finished && frozen && notWon,
+					$"点停止后循环退出：按钮=\"{button.Text}\"，步数冻结在 {_afterStop}（现 {_maze.Panel.StepCount}），未通关={notWon}");
+				return;
+			}
+
+			if (_frame > MaxFrames) Report(false, "停止测试超时");
+			return;
 		}
 
 		if (_demo)
