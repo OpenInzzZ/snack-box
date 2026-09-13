@@ -50,8 +50,8 @@ public static class AgentStore
 
 	public static ApiFormat Format { get; set; } = ApiFormat.Auto;
 
-	/// <summary>每步之间的停顿（秒），太快看不清</summary>
-	public static float StepDelay { get; set; } = 0.5f;
+	/// <summary>每步之间的停顿（秒）。默认 0：靠走一格本身的时间分隔，不再额外等待</summary>
+	public static float StepDelay { get; set; }
 
 	public static int Count => Profiles.Count;
 
@@ -122,7 +122,7 @@ public static class AgentStore
 		Profiles.Clear();
 		Selected = 0;
 		Format = ApiFormat.Auto;
-		StepDelay = 0.5f;
+		StepDelay = 0f;
 
 		if (!FileAccess.FileExists(SavePath))
 		{
@@ -148,8 +148,6 @@ public static class AgentStore
 		Godot.Collections.Dictionary data = parsed.AsGodotDictionary();
 		Format = (ApiFormat)Mathf.Clamp(
 			data.TryGetValue("format", out Variant format) ? format.AsInt32() : 0, 0, Formats.Length - 1);
-		StepDelay = Mathf.Clamp(
-			(float)(data.TryGetValue("step_delay", out Variant delay) ? delay.AsDouble() : 0.5), 0f, 5f);
 
 		if (data.TryGetValue("profiles", out Variant list) && list.VariantType == Variant.Type.Array)
 		{
@@ -191,7 +189,6 @@ public static class AgentStore
 		{
 			{ "selected", Selected },
 			{ "format", (int)Format },
-			{ "step_delay", StepDelay },
 			{ "profiles", list },
 		};
 

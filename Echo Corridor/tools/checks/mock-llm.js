@@ -5,7 +5,9 @@
  * 本地假模型：按 OpenAI 的两种格式回话，用来验证「AI 代打」的请求拼装与回复解析。
  * 它把收到的每个请求体写进日志，方便断言格式是否正确。
  *
- *   node tools/checks/mock-llm.js <日志文件> <端口>
+ *   node tools/checks/mock-llm.js <日志文件> <端口> [响应延迟毫秒]
+ *
+ * 第 4 个参数把回复拖慢，用来验证「点了停止能不能立刻打断正在飞的请求」。
  */
 
 const http = require('http');
@@ -13,12 +15,15 @@ const fs = require('fs');
 
 const LOG_PATH = process.argv[2] || 'tools/out/mock-llm.log';
 const PORT = Number(process.argv[3] || 45910);
+const DELAY = Number(process.argv[4] || 0);
 
 let count = 0;
 
 const server = http.createServer((request, response) => {
   let body = '';
   request.on('data', (chunk) => { body += chunk; });
+  request.on('error', () => {});
+  response.on('error', () => {});
   request.on('end', () => {
     count++;
 
@@ -52,8 +57,21 @@ const server = http.createServer((request, response) => {
       };
 
     const encoded = JSON.stringify(payload);
-    response.writeHead(200, { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(encoded) });
-    response.end(encoded);
+
+    const send = () => {
+      // 延迟期间客户端可能已经断开（玩家点了停止），这时不能再往这个 socket 写
+      if (response.writableEnded || response.destroyed) return;
+
+      try {
+        response.writeHead(200, { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(encoded) });
+        response.end(encoded);
+      } catch (error) {
+        console.log(`[MOCK] 回复写入失败（客户端大概已断开）：${error.message}`);
+      }
+    };
+
+    if (DELAY > 0) setTimeout(send, DELAY);
+    else send();
   });
 });
 

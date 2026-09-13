@@ -217,6 +217,7 @@ public partial class MazeGame : Node2D
 
 		Agent = new AgentPlayer();
 		AddChild(Agent);
+		Panel.StopRequested += Agent.RequestStop;
 		Agent.Begin(this, Panel);
 	}
 

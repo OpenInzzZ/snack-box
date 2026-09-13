@@ -17,6 +17,15 @@ public partial class MainMenu : Control
 		("HighButton", MazeDifficulty.High),
 	};
 
+	// 深色卡片配色，与 main_menu.tscn 里的 StyleBoxFlat 保持一致
+	private static readonly Color CardBg = new(0.0980392f, 0.101961f, 0.121569f);
+	private static readonly Color CardBgHover = new(0.121569f, 0.129412f, 0.160784f);
+	private static readonly Color CardBgSelected = new(0.137255f, 0.156863f, 0.219608f);
+	private static readonly Color CardBorder = new(1f, 1f, 1f, 0.0784314f);
+	private static readonly Color Accent = new(0.541176f, 0.705882f, 0.972549f);
+	private static readonly Color TextPrimary = new(0.909804f, 0.917647f, 0.929412f);
+	private static readonly Color TextMuted = new(0.603922f, 0.627451f, 0.65098f);
+
 	private Control _home;
 	private Control _modelsPage;
 	private Control _setupPage;
@@ -32,6 +41,7 @@ public partial class MainMenu : Control
 
 	private VBoxContainer _modelList;
 	private PanelContainer _editPanel;
+	private ColorRect _editDim;
 	private LineEdit _nameInput;
 	private LineEdit _urlInput;
 	private LineEdit _modelInput;
@@ -64,8 +74,10 @@ public partial class MainMenu : Control
 		_modePicker = GetNode<OptionButton>("Home/SettingsPanel/ModeRow/ModePicker");
 		_resolutionPicker = GetNode<OptionButton>("Home/SettingsPanel/ResolutionRow/ResolutionPicker");
 
-		_modelList = GetNode<VBoxContainer>("ModelsPage/ModelList");
+		_modelList = GetNode<VBoxContainer>("ModelsPage/ListScroll/ModelList");
 		_editPanel = GetNode<PanelContainer>("EditPanel");
+		_editDim = GetNode<ColorRect>("EditDim");
+		_editDim.GuiInput += OnDimInput;
 		_formTitle = GetNode<Label>("EditPanel/Form/FormTitle");
 		_nameInput = GetNode<LineEdit>("EditPanel/Form/NameRow/NameInput");
 		_urlInput = GetNode<LineEdit>("EditPanel/Form/UrlRow/UrlInput");
@@ -89,7 +101,7 @@ public partial class MainMenu : Control
 		GetNode<Button>("ModelsPage/NextButton").Pressed += () => OpenSetup(true);
 
 		GetNode<Button>("EditPanel/Form/FormButtons/SaveButton").Pressed += SaveForm;
-		GetNode<Button>("EditPanel/Form/FormButtons/CancelButton").Pressed += () => _editPanel.Visible = false;
+		GetNode<Button>("EditPanel/Form/FormButtons/CancelButton").Pressed += CloseForm;
 
 		GetNode<Button>("SetupPage/TopRow/BackButton").Pressed += () => ShowPage(_agentFlow ? _modelsPage : _home);
 		GetNode<Button>("SetupPage/BeginButton").Pressed += BeginGame;
@@ -139,7 +151,7 @@ public partial class MainMenu : Control
 		if (!@event.IsActionPressed("ui_cancel")) return;
 
 		// Esc：先关表单 / 面板，其次回上一页
-		if (_editPanel.Visible) _editPanel.Visible = false;
+		if (_editPanel.Visible) CloseForm();
 		else if (_boardLabel.Visible || _settingsPanel.Visible) HidePanels();
 		else if (_setupPage.Visible) ShowPage(_agentFlow ? _modelsPage : _home);
 		else if (_modelsPage.Visible) ShowPage(_home);
@@ -154,7 +166,7 @@ public partial class MainMenu : Control
 		_home.Visible = page == _home;
 		_modelsPage.Visible = page == _modelsPage;
 		_setupPage.Visible = page == _setupPage;
-		_editPanel.Visible = false;
+		CloseForm();
 		HidePanels();
 
 		if (page == _modelsPage) RefreshModelList();
@@ -257,28 +269,97 @@ public partial class MainMenu : Control
 
 		for (int i = 0; i < AgentStore.Count; i++)
 		{
-			AgentProfile profile = AgentStore.At(i);
-			string mark = i == AgentStore.Selected ? "✓ " : "　";
-			string suffix = profile.BaseUrl.StartsWith("mock://") ? "（内置演示，不联网）" : $"{profile.BaseUrl} · {profile.Model}";
-
-			var button = new Button
-			{
-				Text = $"{mark}{profile.Name}　{suffix}",
-				CustomMinimumSize = new Vector2(660, 40),
-				ToggleMode = true,
-				ButtonPressed = i == AgentStore.Selected,
-			};
-
-			int index = i;
-			button.Pressed += () =>
-			{
-				AgentStore.Select(index);
-				AgentStore.Save();
-				RefreshModelList();
-			};
-
-			_modelList.AddChild(button);
+			_modelList.AddChild(BuildModelCard(AgentStore.At(i), i, i == AgentStore.Selected));
 		}
+	}
+
+	/// <summary>一张模型卡片：上行名字、下行接口信息；选中的左侧亮条加「使用中」标记</summary>
+	private Control BuildModelCard(AgentProfile profile, int index, bool selected)
+	{
+		var card = new PanelContainer
+		{
+			CustomMinimumSize = new Vector2(0, 64),
+			MouseDefaultCursorShape = Control.CursorShape.PointingHand,
+		};
+		card.AddThemeStyleboxOverride("panel", CardStyle(selected, false));
+
+		var row = new HBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+		row.AddThemeConstantOverride("separation", 12);
+
+		var textColumn = new VBoxContainer
+		{
+			SizeFlagsHorizontal = Control.SizeFlags.ExpandFill,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+		textColumn.AddThemeConstantOverride("separation", 2);
+
+		textColumn.AddChild(MakeCardLabel(profile.Name, 17, TextPrimary));
+		textColumn.AddChild(MakeCardLabel(
+			profile.BaseUrl.StartsWith("mock://") ? "内置演示 · 不联网，零配置" : $"{profile.BaseUrl} · {profile.Model}",
+			13,
+			TextMuted));
+		row.AddChild(textColumn);
+
+		if (selected)
+		{
+			Label badge = MakeCardLabel("使用中", 13, Accent, false);
+			badge.VerticalAlignment = VerticalAlignment.Center;
+			row.AddChild(badge);
+		}
+
+		card.AddChild(row);
+
+		card.GuiInput += @event =>
+		{
+			if (@event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) return;
+
+			AgentStore.Select(index);
+			AgentStore.Save();
+			RefreshModelList();
+		};
+
+		card.MouseEntered += () => card.AddThemeStyleboxOverride("panel", CardStyle(selected, true));
+		card.MouseExited += () => card.AddThemeStyleboxOverride("panel", CardStyle(selected, false));
+
+		return card;
+	}
+
+	/// <summary>卡片里的文字：不拦鼠标，事件留给卡片本体处理点击</summary>
+	private static Label MakeCardLabel(string text, int fontSize, Color color, bool trim = true)
+	{
+		var label = new Label
+		{
+			Text = text,
+			MouseFilter = Control.MouseFilterEnum.Ignore,
+		};
+
+		// 只有会变长的名字/地址需要裁剪；标记类文字设了 TrimEllipsis 最小宽度会变 0，会被挤没
+		if (trim) label.TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis;
+
+		label.AddThemeFontSizeOverride("font_size", fontSize);
+		label.AddThemeColorOverride("font_color", color);
+
+		return label;
+	}
+
+	private static StyleBoxFlat CardStyle(bool selected, bool hover)
+	{
+		var style = new StyleBoxFlat
+		{
+			BgColor = selected ? CardBgSelected : hover ? CardBgHover : CardBg,
+			BorderColor = selected ? Accent : CardBorder,
+			ContentMarginLeft = 16,
+			ContentMarginRight = 16,
+			ContentMarginTop = 10,
+			ContentMarginBottom = 10,
+		};
+		style.SetCornerRadiusAll(10);
+		style.SetBorderWidthAll(1);
+
+		// 选中的卡片把左边框加粗成亮条
+		if (selected) style.BorderWidthLeft = 3;
+
+		return style;
 	}
 
 	private void OpenForm(int index)
@@ -294,6 +375,23 @@ public partial class MainMenu : Control
 		_formatPicker.Selected = (int)AgentStore.Format;
 
 		_editPanel.Visible = true;
+		_editDim.Visible = true;
+	}
+
+	/// <summary>收起编辑表单，连带撤掉遮罩（两者必须同进同退，否则列表会透上来）</summary>
+	private void CloseForm()
+	{
+		_editPanel.Visible = false;
+		_editDim.Visible = false;
+	}
+
+	/// <summary>点遮罩空白处关闭表单</summary>
+	private void OnDimInput(InputEvent @event)
+	{
+		if (@event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left }) return;
+
+		CloseForm();
+		GetViewport().SetInputAsHandled();
 	}
 
 	private void SaveForm()
@@ -318,7 +416,7 @@ public partial class MainMenu : Control
 		AgentStore.Format = (AgentStore.ApiFormat)_formatPicker.Selected;
 		AgentStore.Save();
 
-		_editPanel.Visible = false;
+		CloseForm();
 		RefreshModelList();
 	}
 
